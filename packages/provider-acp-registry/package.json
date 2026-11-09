@@ -11,6 +11,10 @@
       "types": "./src/settings.ts",
       "import": "./src/settings.ts"
     },
+    "./presets": {
+      "types": "./src/presets.ts",
+      "import": "./src/presets.ts"
+    },
     "./server": {
       "types": "./src/server.ts",
       "import": "./src/server.ts"

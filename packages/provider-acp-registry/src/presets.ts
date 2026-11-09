@@ -47,7 +47,7 @@ export const LocalAgentPreset = Schema.Struct({
 });
 export type LocalAgentPreset = typeof LocalAgentPreset.Type;
 
-const INSTALL_DOCS = "docs/user/providers-acp-local.md";
+const INSTALL_DOCS = "docs/user/providers-acp.md#presets-for-installed-agents";
 
 /**
  * Order matters: it is the order Add provider lists them, and the order the resolver returns.

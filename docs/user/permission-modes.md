@@ -44,6 +44,11 @@ session-wide choice, because Grok would remember that command for the whole proj
 ACP Registry agents run their own tools in their own mode; T3 Code answers their approval requests
 by the permission mode. See [ACP Registry permissions](./providers-acp.md#permissions-and-terminals).
 
+An agent added as a local command, including one added from a preset, may never ask at all: Hermes
+exposes its own edit-approval policy, Cline an `auto_approve` option, and CodeBuddy its own permission
+mode. Those appear in the model options menu next to the model. A thread can therefore run in
+**Supervised** and still see no prompt, because the agent approved the action itself.
+
 Claude can still ask in **Full access** when its settings disable bypass permissions or require
 approval for an action. Dangerous-removal safety checks in bypass mode reject the command with
 the original warning. Claude can use a safe rewrite when the warning supplies one; otherwise it

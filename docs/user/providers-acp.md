@@ -39,6 +39,31 @@ credentials and skills remain managed by the installed agent or its wrapper. Mod
 options come from ACP, including model IDs that contain JSON. T3 Code launches the executable directly
 without expanding shell expressions.
 
+## Presets for installed agents
+
+**Settings → Providers → Add provider → Show more** lists, under _Agents on this machine_, the agent
+CLIs T3 Code knows how to launch over ACP. A preset fills the executable, its arguments, and the
+display name, then goes straight to the identity step. Nothing is downloaded: T3 Code runs the CLI
+you installed, on the machine that hosts your server.
+
+| Preset    | Command           | Notes                                                                         |
+| --------- | ----------------- | ----------------------------------------------------------------------------- |
+| Hermes    | `hermes acp`      | Reports its own model catalog, including which provider each model uses.      |
+| Cline     | `cline --acp`     | Answers turns but reports no tool activity, and offers no T3 MCP tools.       |
+| Kimi Code | `kimi acp`        | Models come from the agent's session configuration.                           |
+| CodeBuddy | `codebuddy --acp` | Reports no name; the preset supplies "CodeBuddy". May offer several sign-ins. |
+| Kilo Code | `kilo acp`        | Needs a sign-in before the first turn; otherwise the prompt fails.            |
+
+Choose **Add provider → Show more → Local ACP command** instead when your agent is not listed, or
+when its launcher needs different arguments. A preset is only a shortcut for that form: edit the
+executable or arguments before saving if your install lives somewhere unusual, and use **Executable
+override** afterwards to keep a registry agent's arguments while pointing at a local binary.
+
+These CLIs are third-party software. T3 Code does not install, update, or vouch for them; review an
+agent's source and license before you add it. Their own configuration decides how far they can act,
+and their own approval setting decides whether T3 Code is asked at all. See
+[Permissions and terminals](#permissions-and-terminals).
+
 ## Where agents run
 
 Registry agents always run on the machine that hosts your T3 Code server. That stays true when you

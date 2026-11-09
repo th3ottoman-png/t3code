@@ -17,7 +17,7 @@ const preset = (
   commandArgs: ["acp"],
   support: "full",
   capabilityNotes: [],
-  docsUrl: "docs/user/providers-acp-local.md",
+  docsUrl: "docs/user/providers-acp.md",
   ...overrides,
 });
 

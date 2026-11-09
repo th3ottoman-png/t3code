@@ -15,6 +15,11 @@ whether a turn runs. This page lists the decisions and evidence a new driver nee
 - **Other protocols** get a native adapter that implements
   [`ProviderAdapterV2`](../../packages/provider-core/src/server/ProviderAdapter.ts), like Codex,
   Claude, Cursor, OpenCode, Pi, and Muse.
+- **Presets are data, not a driver.** `packages/provider-acp-registry/src/presets.ts` lists installed
+  CLIs with their launcher arguments; adding one there changes nothing at the adapter boundary, and
+  a preset must never grow an agent-id check. Its claimed support level is a promise to the user, so
+  measure an agent before listing it, and list it as limited when it answers turns but cannot take
+  part in part of the product.
 
 Provider-specific behavior stays in the adapter and driver. Orchestration and clients read
 capabilities, never the driver kind.

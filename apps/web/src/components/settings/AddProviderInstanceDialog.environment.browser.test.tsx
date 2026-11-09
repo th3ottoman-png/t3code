@@ -46,6 +46,17 @@ vi.mock(import("../../state/session"), async (original) => {
     readEnvironmentScope: hasScope as never,
   };
 });
+const hermesPreset = vi.hoisted(() => ({
+  id: "hermes",
+  label: "Hermes",
+  description: "Hermes Agent, configured and signed in on this machine.",
+  binaryCandidates: ["hermes"],
+  commandArgs: ["acp"],
+  support: "full",
+  capabilityNotes: ["Reports its full model catalog over ACP."],
+  docsUrl: "docs/user/providers-acp-local.md",
+}));
+
 vi.mock(import("../ui/toast"), async (original) => {
   const actual = await original();
   return { ...actual, toastManager: { ...actual.toastManager, add: actions.toast } };
@@ -56,6 +67,7 @@ vi.mock(import("./AcpRegistrySearchStep"), async (original) => ({
     onPrepared: (agent: AcpRegistrySearchAgent) => void;
     onManualConfiguration: () => void;
     onLocalConfiguration: () => void;
+    onSelectLocalAgent?: (preset: unknown) => void;
   }) => (
     <div>
       <button type="button" onClick={() => props.onPrepared(preparedAgent)}>
@@ -67,6 +79,11 @@ vi.mock(import("./AcpRegistrySearchStep"), async (original) => ({
       <button type="button" onClick={props.onLocalConfiguration}>
         Use local command
       </button>
+      {props.onSelectLocalAgent ? (
+        <button type="button" onClick={() => props.onSelectLocalAgent?.(hermesPreset)}>
+          Use Hermes preset
+        </button>
+      ) : null}
     </div>
   )) as never,
 }));
@@ -288,6 +305,28 @@ describe("AddProviderInstanceDialog environment routing", () => {
       },
     });
     expect(actions.onOpenChange).toHaveBeenCalledWith(false);
+    expect(signInStep()).toBeNull();
+  });
+
+  it("prefills a local command from an agent preset and skips the command step", async () => {
+    setup();
+    await using _screen = await render(dialog());
+    await click("Show more");
+    await click("Use Hermes preset");
+
+    // The preset decides the command, its arguments and the label, so identity is the next stop.
+    await click("Add instance");
+
+    expect(settingsHooks.mutate).toHaveBeenCalledWith({
+      operation: "create",
+      instanceId: "acpRegistry_hermes",
+      instance: {
+        driver: ProviderDriverKind.make("acpRegistry"),
+        enabled: true,
+        displayName: "Hermes",
+        config: { source: "local", commandPath: "hermes", commandArgs: ["acp"] },
+      },
+    });
     expect(signInStep()).toBeNull();
   });
 

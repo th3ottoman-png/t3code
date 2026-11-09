@@ -10,6 +10,10 @@ import {
 import { squashAtomCommandFailure } from "@t3tools/client-runtime/state/runtime";
 import type { ProviderClientDefinition } from "@t3tools/provider-core/client";
 import {
+  presetProviderInstanceConfig,
+  type LocalAgentPreset,
+} from "@t3tools/provider-acp-registry/presets";
+import {
   type AcpRegistrySearchAgent,
   AuthProvidersManageScope,
   ProviderInstanceId,
@@ -364,6 +368,26 @@ export function AddProviderInstanceDialog({
     setHasAttemptedSubmit(false);
   };
 
+  const handleLocalAgentPreset = (preset: LocalAgentPreset) => {
+    setDriver(ACP_REGISTRY_DRIVER_KIND);
+    setSelectedAcp(null);
+    setIsManualAcpConfiguration(true);
+    setConfigByDriver((existing) => ({
+      ...existing,
+      [ACP_REGISTRY_DRIVER_KIND]: presetProviderInstanceConfig(preset, preset.binaryCandidates[0]),
+    }));
+    setIdentityByDriver((existing) =>
+      updateProviderIdentityDraft(existing, ACP_REGISTRY_DRIVER_KIND, {
+        label: preset.label,
+        instanceIdOverride: null,
+      }),
+    );
+    setLocalEnvironment([]);
+    setHasAttemptedSubmit(false);
+    // Straight to identity: the command, its arguments, and the label are already decided.
+    setWizardStep(1);
+  };
+
   // A policy that owns this driver's launch settings also rules out ChatGPT's own runtime.
   const driverLocks = managedInstanceLocks(managedPolicy, driver);
 
@@ -564,6 +588,7 @@ export function AddProviderInstanceDialog({
                             onPrepared={handleAcpPrepared}
                             onManualConfiguration={handleManualAcpConfiguration}
                             onLocalConfiguration={handleLocalAcpConfiguration}
+                            onSelectLocalAgent={handleLocalAgentPreset}
                           />
                           {isAcpRegistry && hasAttemptedSubmit && acpSelectionError ? (
                             <p className="mt-2 text-2xs text-destructive">{acpSelectionError}</p>

@@ -11,8 +11,9 @@ import type {
   EnvironmentId,
   ProviderInstanceConfig,
 } from "@t3tools/contracts";
-import { ExternalLinkIcon, SearchIcon } from "lucide-react";
+import { ExternalLinkIcon, InfoIcon, SearchIcon } from "lucide-react";
 import { type FormEvent, useState } from "react";
+import { LOCAL_AGENT_PRESETS, type LocalAgentPreset } from "@t3tools/provider-acp-registry/presets";
 
 import { useDeadlinePassed } from "../../hooks/useDeadline";
 import { serverEnvironment } from "../../state/server";
@@ -23,7 +24,10 @@ import { Button } from "../ui/button";
 import { InputGroup, InputGroupAddon, InputGroupInput } from "../ui/input-group";
 import { ScrollArea } from "../ui/scroll-area";
 import { Tooltip, TooltipPopup, TooltipTrigger } from "../ui/tooltip";
-import { isConfiguredAcpRegistryAgent } from "./AddProviderInstanceDialog.logic";
+import {
+  isConfiguredAcpRegistryAgent,
+  isConfiguredLocalAgent,
+} from "./AddProviderInstanceDialog.logic";
 import { ProviderDriverKind } from "@t3tools/contracts";
 import { ProviderInstanceIcon } from "../chat/ProviderInstanceIcon";
 import { providerClients } from "./providerDriverMeta";
@@ -127,6 +131,8 @@ interface AcpRegistrySearchStepProps {
   readonly onPrepared: (agent: AcpRegistrySearchAgent) => void;
   readonly onManualConfiguration: () => void;
   readonly onLocalConfiguration?: () => void;
+  /** Offered above the registry: prefills a local command for an installed agent CLI. */
+  readonly onSelectLocalAgent?: (preset: LocalAgentPreset) => void;
 }
 
 export function AcpRegistrySearchStep({
@@ -136,6 +142,7 @@ export function AcpRegistrySearchStep({
   onPrepared,
   onManualConfiguration,
   onLocalConfiguration,
+  onSelectLocalAgent,
 }: AcpRegistrySearchStepProps) {
   const canManageProviders = useEnvironmentScope(environmentId, AuthProvidersManageScope);
   const { query, search, preparingId, prepareError } = registry;
@@ -160,6 +167,30 @@ export function AcpRegistrySearchStep({
       <h3 className="sr-only" id="acp-registry-search-heading">
         Choose an agent
       </h3>
+
+      {onSelectLocalAgent ? (
+        <div className="grid gap-2" aria-labelledby="local-agents-heading">
+          <div className="flex items-baseline justify-between gap-2">
+            <h4 className="text-xs font-medium text-foreground" id="local-agents-heading">
+              Agents on this machine
+            </h4>
+            <span className="text-2xs text-muted-foreground">Runs the CLI you installed</span>
+          </div>
+          <ScrollArea scrollFade className="max-h-64">
+            <div className="pr-2.5">
+              {LOCAL_AGENT_PRESETS.map((preset) => (
+                <LocalAgentRow
+                  alreadyAdded={isConfiguredLocalAgent(providerInstances, preset.binaryCandidates)}
+                  canAdd={canManageProviders && preparingId === null}
+                  key={preset.id}
+                  onSelect={onSelectLocalAgent}
+                  preset={preset}
+                />
+              ))}
+            </div>
+          </ScrollArea>
+        </div>
+      ) : null}
 
       <form className="flex flex-wrap items-center gap-2" onSubmit={handleSearch}>
         <InputGroup className="min-w-40 flex-1">
@@ -244,6 +275,78 @@ export function AcpRegistrySearchStep({
         )
       ) : null}
     </section>
+  );
+}
+
+function LocalAgentRow({
+  preset,
+  alreadyAdded,
+  canAdd,
+  onSelect,
+}: {
+  readonly preset: LocalAgentPreset;
+  readonly alreadyAdded: boolean;
+  readonly canAdd: boolean;
+  readonly onSelect: (preset: LocalAgentPreset) => void;
+}) {
+  const command = [preset.binaryCandidates[0], ...preset.commandArgs].join(" ");
+  return (
+    <article className="min-w-0 py-2.5">
+      <div className="flex min-w-0 items-center justify-between gap-3">
+        <div className="flex min-w-0 flex-1 items-center gap-3">
+          <ProviderInstanceIcon
+            driverKind={ProviderDriverKind.make("acpRegistry")}
+            displayName={preset.label}
+            iconClassName="size-6 rounded-md text-muted-foreground"
+          />
+          <div className="min-w-0 flex-1">
+            <div className="flex min-w-0 items-center gap-2">
+              <h4 className="min-w-0 truncate text-sm font-medium text-foreground">
+                {preset.label}
+              </h4>
+              {preset.support === "limited" ? (
+                <span className="shrink-0 rounded-full border border-border px-1.5 py-0.5 text-2xs text-muted-foreground">
+                  Limited
+                </span>
+              ) : null}
+            </div>
+            <p className="mt-0.5 truncate text-xs text-muted-foreground">{preset.description}</p>
+            <p className="mt-0.5 truncate font-mono text-2xs text-muted-foreground">{command}</p>
+          </div>
+        </div>
+        <div className="flex shrink-0 items-center gap-1.5">
+          <Tooltip>
+            <TooltipTrigger
+              render={
+                <Button
+                  aria-label={`What ${preset.label} supports`}
+                  size="icon-xs"
+                  variant="ghost-muted"
+                >
+                  <InfoIcon />
+                </Button>
+              }
+            />
+            <TooltipPopup>
+              <ul className="grid max-w-72 gap-1">
+                {preset.capabilityNotes.map((note) => (
+                  <li key={note}>{note}</li>
+                ))}
+              </ul>
+            </TooltipPopup>
+          </Tooltip>
+          <Button
+            aria-label={`${alreadyAdded ? "Already added" : "Add"} ${preset.label}`}
+            disabled={!canAdd || alreadyAdded}
+            onClick={() => onSelect(preset)}
+            size="xs"
+            variant="outline"
+          >
+            {alreadyAdded ? "Added" : "Add"}
+          </Button>
+        </div>
+      </div>
+    </article>
   );
 }
 

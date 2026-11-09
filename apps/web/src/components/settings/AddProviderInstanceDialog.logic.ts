@@ -56,6 +56,32 @@ export function isConfiguredAcpRegistryAgent(
   });
 }
 
+/**
+ * Whether a local ACP instance already runs this preset. Matches on the executable's basename,
+ * because the stored path may be absolute while a preset offers a bare `PATH` name.
+ */
+export function isConfiguredLocalAgent(
+  instances: Readonly<Record<string, { readonly driver: string; readonly config?: unknown }>>,
+  binaryCandidates: ReadonlyArray<string>,
+): boolean {
+  const candidateNames = new Set(
+    binaryCandidates.map((candidate) => candidate.split(/[\\/]/).pop()),
+  );
+  return Object.values(instances).some((instance) => {
+    if (
+      instance.driver !== "acpRegistry" ||
+      !instance.config ||
+      typeof instance.config !== "object"
+    ) {
+      return false;
+    }
+    const config = instance.config as Record<string, unknown>;
+    if (config.source !== "local" || typeof config.commandPath !== "string") return false;
+    const executableName = config.commandPath.split(/[\\/]/).pop();
+    return executableName !== undefined && candidateNames.has(executableName);
+  });
+}
+
 export function resolveWizardNavigation(
   currentStep: number,
   requestedStep: number,
